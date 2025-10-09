@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 220 26% 6%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 23% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 23% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 193 100% 50%;
+    --primary-foreground: 220 26% 6%;
+
+    --secondary: 270 70% 60%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 20% 20%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 193 100% 50%;
+    --accent-foreground: 220 26% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 193 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens for portfolio */
+    --gradient-primary: linear-gradient(135deg, hsl(193 100% 50%), hsl(270 70% 60%));
+    --gradient-card: linear-gradient(145deg, hsl(220 23% 12%), hsl(220 23% 8%));
+    --shadow-glow: 0 0 40px hsl(193 100% 50% / 0.2);
+    --shadow-card: 0 8px 32px hsl(220 26% 4% / 0.4);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 220 26% 6%;
+    --foreground: 210 40% 98%;
+    --card: 220 23% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 23% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 193 100% 50%;
+    --primary-foreground: 220 26% 6%;
+    --secondary: 270 70% 60%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 220 20% 20%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 193 100% 50%;
+    --accent-foreground: 220 26% 6%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 193 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
