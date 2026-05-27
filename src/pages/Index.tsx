@@ -1,23 +1,40 @@
-import  Hero from "../components/Hero";
-import  About  from "../components/About";
-import  Skills  from "../components/Skills";
-import  Projects  from "../components/Projects";
-import  Blogs  from "../components/Blogs";
-import  Socials  from "../components/Socials";
-import  Footer  from "../components/Footer";
+import clsx from 'clsx';
+import Link from '@docusaurus/Link';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import Layout from '@theme/Layout';
+import Heading from '@theme/Heading';
+import styles from './index.module.css';
 
-const Index = () => {
+function HomepageHeader() {
+  const {siteConfig} = useDocusaurusContext();
   return (
-    <div className="min-h-screen bg-background">
-      <Hero />
-      <About />
-      <Skills />
-      <Projects />
-      <Blogs />
-      <Socials />
-      <Footer />
-    </div>
+    <header className={clsx('hero hero--primary', styles.heroBanner)}>
+      <div className="container">
+        <Heading as="h1" className="hero__title">
+          {siteConfig.title}
+        </Heading>
+        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <div className={styles.buttons}>
+          <Link
+            className="button button--secondary button--lg"
+            to="/docs/overview">
+            Read the Documentation
+          </Link>
+        </div>
+      </div>
+    </header>
   );
-};
+}
 
-export default Index;
+export default function Home(): JSX.Element {
+  const {siteConfig} = useDocusaurusContext();
+  return (
+    <Layout
+      title={`Welcome to ${siteConfig.title}`}
+      description="WebAssembly-Native GraphQL from MySQL">
+      <HomepageHeader />
+      <main>
+      </main>
+    </Layout>
+  );
+}
