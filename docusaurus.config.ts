@@ -33,7 +33,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/rabelmervin/Graphily/tree/main/docs/',
+          editUrl: 'https://github.com/rabelmervin/static-graphily/tree/main/portfolio-website/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -62,7 +62,7 @@ const config: Config = {
           label: 'Documentation',
         },
         {
-          href: 'https://github.com/rabelmervin/Graphily',
+          href: 'https://github.com/rabelmervin/static-graphily',
           label: 'GitHub',
           position: 'right',
         },
@@ -89,7 +89,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/rabelmervin/Graphily',
+              href: 'https://github.com/rabelmervin/static-graphily',
             },
           ],
         },

@@ -26,7 +26,7 @@ function HomepageHeader() {
             </Link>
             <Link
               className="button button--secondary button--lg button--outline"
-              to="https://github.com/rabelmervin/Graphily">
+              to="https://github.com/rabelmervin/static-graphily">
               View on GitHub
             </Link>
           </div>

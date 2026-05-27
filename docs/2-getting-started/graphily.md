@@ -22,7 +22,7 @@ Running Graphily requires a few moving parts to simulate a production environmen
 First, ensure you have the Graphily repository cloned and navigate into it. All subsequent commands should be run from the root of this repository.
 
 ```bash
-git clone https://github.com/rabelmervin/Graphily.git
+git clone https://github.com/rabelmervin/static-graphily.git
 cd Graphily
 ```
 
