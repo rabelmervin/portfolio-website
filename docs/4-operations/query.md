@@ -2,15 +2,18 @@
 
 Graphily uses three high-level execution paths. The **Data-Engine** inspects the request and routes it to the correct path based on the operation type and filter complexity.
 
-1. **Native** — Path A: Native Seaography (Standard CRUD)
+1. **Native** — Path A: Native Seaography (Standard list/get queries)
 2. **Non-Native** — Path B: Non-Native / OR-Filter Extension
-3. **Specialised** — Path C: Specialised Operations (aggregate, upsert, recursive, me, reserve, semantic search)
+3. **Specialised** — Path C: Specialised Operations (SimpleCrud, aggregate, upsert, recursive, me, reserve, nested mutation, file operations)
 
-## Path A: Native Seaography (Standard CRUD)
+## Path A: Native Seaography (Standard Queries)
 
 **What it supports**
-- Standard queries and mutations that match the Seaography/SeaORM schema.
-- Typical CRUD operations (list, get, create, update, delete) with standard filters, pagination, and sorting.
+- `allX` (list) and `getX` (get) queries resolved directly by Seaography / SeaORM.
+- Native filter operators: `eq`, `neq`, `lt`, `gt`, `lte`, `gte`, `in`, `notIn`, `contains`, `startsWith`, `endsWith`, `isNull`, `isNotNull` — with standard pagination and sorting.
+- Mutations that do not match any specialized pattern fall through to this path.
+
+> **Note:** `createX`, `updateX`, and `deleteX` mutations are classified as **Path C** (SimpleCrud), not Path A.
 
 **Flow**
 ```mermaid
@@ -28,11 +31,12 @@ flowchart LR
 
 **Detailed steps (code-backed)**
 1. Gateway validates auth, rate limits, and query rules, then forwards the request.
-2. Data-Engine parses the operation and classifies it as a Standard query/mutation.
-3. Data-Engine normalizes variables and builds the `SecurityContext` (roles, matrices, lenses, row-level settings).
-4. Entities receives `GqlRequest`, attaches `SecurityContext`, and executes Seaography resolvers.
-5. SeaORM uses `ProxyDatabaseTrait` via `WitProxy` to call the MySQL host plugin over WIT.
-6. Data-Engine post-processes the result (field stripping, pagination lift, CRUD wrapping) and returns JSON.
+2. Data-Engine parses the operation and classifies it as a Standard query.
+3. Data-Engine normalizes variables (predicates, operators, sort) — no `__graphilyExt` injection since all operators are native.
+4. Data-Engine builds the `SecurityContext` (roles, access matrices, lenses, row-level settings) and forwards the request to Entities.
+5. Entities receives the request, attaches `SecurityContext`, and executes Seaography resolvers.
+6. SeaORM uses `ProxyDatabaseTrait` via `WitProxy` to call the MySQL host plugin over WIT.
+7. Data-Engine post-processes the result (pagination lift, field stripping) and returns JSON.
 
 **Example Query**
 ```graphql
@@ -50,11 +54,15 @@ query FilteredUsers($email: String!) {
 
 ## Path B: Seaography + Non-Native Filters
 
-This path is still Seaography-based, but Data-Engine injects a non-native filter extension that Entities merges into the SQL.
+This path is still Seaography-based, but Data-Engine detects non-native filter operators in the request variables and injects a `__graphilyExt` branch that `GraphilyFilterHook` inside Entities merges into the SQL.
 
 **What it supports**
-- Queries that include OR branches or filter operators that Seaography does not express directly.
-- Access-matrix permission filters and row-level security that require extra condition branches.
+- Queries whose variables contain non-native filter operators that Seaography cannot express directly: `or`, `blank`, `notBlank`, `matchesRegexp`, `regexp`, `between`, `equalToDateRange`, `notBetween`, `notEqualToDateRange`, `datePreset`.
+- `eq` with a boolean value also triggers this path.
+
+> `contains`, `startsWith`, `endsWith`, `gt`, `lt` and similar operators are **native** — they route through Path A.
+>
+> Access-matrix permission filters and row-level security are enforced by `GraphilyFilterHook` on **all** Seaography paths (A and B), not exclusively on Path B.
 
 **Flow**
 ```mermaid
@@ -73,42 +81,44 @@ flowchart LR
 ```
 
 **Detailed steps (code-backed)**
-1. Data-Engine detects OR/non-native filters and injects a `__graphilyExt` branch into variables.
-2. Entities extracts `__graphilyExt` and stores it as `GraphilyFilterExt` in the request context.
-3. `GraphilyFilterHook` merges permission filters, row-level rules, lenses, and `GraphilyFilterExt` into SQL conditions.
-4. SeaORM executes via `WitProxy` and the MySQL host plugin; the response returns through Data-Engine.
+1. Data-Engine scans the normalised variables JSON for non-native operators or an `or` key.
+2. When found, it partitions the `filter` object: native operators stay in `filter`, non-native operators and `or` move into a new `__graphilyExt` key.
+3. Entities extracts `__graphilyExt` from the variables and stores it as `GraphilyFilterExt` in the request context.
+4. `GraphilyFilterHook` merges access-matrix conditions, row-level rules, lenses, and `GraphilyFilterExt` into a single SQL `WHERE` condition.
+5. SeaORM executes via `WitProxy` and the MySQL host plugin; the response returns through Data-Engine.
 
-**Example Query**
+**Example Query** — integration test `15b_non_native_filter_between`
 ```graphql
-query {
-  allUser(
-    where: {
-      _or: [
-        { email: { contains: "@admin.com" } },
-        { name: { eq: "Integration Test" } }
-      ]
-    }
-  ) {
+# Variables: { "filter": { "createdAt": { "between": ["2020-01-01", "2030-12-31"] } } }
+query NonNativeFilter {
+  allBarcode(pagination: { offset: { limit: 5 } }) {
     totalCount
     results {
       id
-      name
+      workOrder
+      imageText
+      createdAt
     }
   }
 }
 ```
+
+The `between` key in the variables JSON triggers `__graphilyExt` injection. `GraphilyFilterHook` converts it into a `BETWEEN` condition in the final SQL query.
 
 ## Path C: Specialized SQL Pipeline (Direct Execution)
 
 This path bypasses Seaography and executes specialized logic in Data-Engine, often by generating SQL with `sea-query` and calling the MySQL host plugin directly.
 
 **What it supports**
+- **SimpleCrud**: `createX`, `updateX`, `deleteX` — standard create, update, and delete mutations executed via direct SQL.
 - **Aggregates**: `countX`, `countDistinctX`, `groupByX`, `distinctX`.
 - **Recursive queries**: `recursiveX` with `by`, `id`/`root_id`, optional `ancestors`, and base filters.
 - **Upsert**: `upsertX` using `INSERT ... ON DUPLICATE KEY UPDATE`.
 - **Reserve**: `reserveX` for ID/slot reservation.
+- **Me queries**: `meX` for the currently-authenticated user.
 - **Nested mutations**: relationship-aware mutations executed as a single pipeline.
 - **File operations**: `generateFileUploadRequest`, `convertFileReference`.
+- **Actions**: any field mapped in the app's `resource_actions` artifact — dispatched before operation classification, routing to RemoteHTTP or ActionsAPI.
 
 **Flow**
 ```mermaid
@@ -130,8 +140,8 @@ flowchart LR
 ```
 
 **Detailed steps (code-backed)**
-1. Data-Engine classifies the operation (aggregate, recursive, upsert, reserve, nested mutation, file operations).
-2. For SQL paths, Data-Engine generates SQL with `sea-query` and calls the MySQL host plugin directly over WIT.
+1. Data-Engine classifies the operation in priority order: file upload → file reference → upsert → nested mutation → SimpleCrud → reserve → aggregate → recursive → me query → standard (fallback).
+2. For SQL paths (SimpleCrud, aggregate, recursive, upsert, reserve, me), Data-Engine generates SQL with `sea-query` and calls the MySQL host plugin directly over WIT — Entities is not involved.
 3. For file operations, Data-Engine builds S3 presigned requests and returns the result without Entities.
 4. For Actions, Data-Engine calls the in-process Actions library (remote HTTP or ActionsAPI path).
 
