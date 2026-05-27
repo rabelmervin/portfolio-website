@@ -52,7 +52,7 @@ const config: Config = {
       title: 'Graphily',
       logo: {
         alt: 'Graphily Logo',
-        src: 'img/logo.svg', 
+        src: 'img/graphily_logo.png', 
       },
       items: [
         {

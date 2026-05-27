@@ -1,23 +1,124 @@
-/**
- * CSS files with the .module.css suffix will be treated as CSS modules
- * and scoped locally.
- */
-
-.heroBanner {
-  padding: 4rem 0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+.mainWrapper {
+  background-color: var(--ifm-background-color);
+  background-image: radial-gradient(circle at top, rgba(138, 43, 226, 0.15), transparent 40%),
+                    radial-gradient(circle at bottom right, rgba(0, 255, 255, 0.1), transparent 50%);
 }
 
-@media screen and (max-width: 996px) {
-  .heroBanner {
-    padding: 2rem;
-  }
+.heroBanner {
+  padding: 6rem 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+  z-index: 1;
+}
+
+.heroLogo {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 2rem;
+  filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+  animation: float 6s ease-in-out infinite;
+}
+
+.heroTitle {
+  font-size: 4rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #00ffff, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
+}
+
+.heroSubtitle {
+  font-size: 1.5rem;
+  color: var(--ifm-color-emphasis-700);
+  margin-bottom: 3rem;
+  font-weight: 400;
+  text-align: center;
 }
 
 .buttons {
   display: flex;
+  gap: 1.5rem;
   align-items: center;
   justify-content: center;
+}
+
+.glowButton {
+  box-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
+  transition: all 0.3s ease;
+  border: none !important;
+  background: linear-gradient(45deg, #8a2be2, #4b0082) !important;
+  color: white !important;
+}
+
+.glowButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+  text-decoration: none;
+}
+
+.features {
+  padding: 5rem 0;
+}
+
+.featureCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  height: 100%;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(138, 43, 226, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: inline-block;
+  padding: 1rem;
+  background: rgba(138, 43, 226, 0.1);
+  border-radius: 50%;
+  box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 4rem 2rem;
+  }
+  .heroTitle {
+    font-size: 3rem;
+  }
+  .buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  .buttons .button {
+    width: 100%;
+  }
 }
