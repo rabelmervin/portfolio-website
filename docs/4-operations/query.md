@@ -141,7 +141,7 @@ flowchart LR
 
 **Detailed steps (code-backed)**
 1. Data-Engine classifies the operation in priority order: file upload → file reference → upsert → nested mutation → SimpleCrud → reserve → aggregate → recursive → me query → standard (fallback).
-2. For SQL paths (SimpleCrud, aggregate, recursive, upsert, reserve, me), Data-Engine generates SQL with `sea-query` and calls the MySQL host plugin directly over WIT — Entities is not involved.
+2. For direct SQL paths (SimpleCrud, aggregate, recursive, upsert, reserve), Data-Engine generates SQL with `sea-query` and calls the MySQL host plugin directly over WIT — Entities is not involved. `meX` is an exception: Data-Engine rewrites it to `oneX(where: { id: { eq: uid } })` and routes it through Entities like a standard query.
 3. For file operations, Data-Engine builds S3 presigned requests and returns the result without Entities.
 4. For Actions, Data-Engine calls the in-process Actions library (remote HTTP or ActionsAPI path).
 
