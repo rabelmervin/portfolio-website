@@ -12,7 +12,7 @@ Its purpose is to be the **single source of truth for all security operations** 
 This is the most critical section for any Wasm component. Other engineers need to know exactly how to talk to it.
 
 **Exports (Provides)**
-- `graphily:security/security-api` (Exposes all cryptographic functions: `verify_token`, `generate_token`, `check_password`, rate limiting checks, query validation, etc.)
+- `graphily:security/security-api` (JWT lifecycle, password hashing and verification, multi-tier rate limiting, RBAC authorization and entity access checks, query depth/complexity validation, OAuth state helpers, and HMAC crypto utilities)
 
 **Imports (Requires)**
 - *None (or standard WASI).* The Security component is a pure logic module that performs CPU-bound cryptographic work. It does not call out to databases or external APIs.
