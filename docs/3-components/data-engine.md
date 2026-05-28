@@ -23,9 +23,10 @@ This is the most critical section for any Wasm component. Other engineers need t
 ## 3. Core Responsibilities
 - **Operation Routing**: Detects and dispatches Standard, Aggregate, Recursive, Nested, Upsert, Reserve, FileUpload, ConvertFileReference, and `me*` queries.
 - **JWT + App Policy Checks**: Verifies app-bound JWTs, enforces mutation-enabled flags, and applies app state rules.
-- **RBAC + SecurityContext**:
-  - Preflights read access against `GRAPHILY_ACCESS_MATRIX_*` and nested entity access.
-  - Builds the `SecurityContext` (roles, role IDs, access matrices, lenses, row-level settings, user claims) for Entities.
+- **Authorization + SecurityContext**:
+  - Evaluates the access matrix once per request — covering entity-level access, row-level scope, permission filters, and field restrictions — and denies unauthorized requests before any query runs.
+  - For Path C operations (aggregates, direct CRUD, recursive, upserts, and similar), applies the authorization profile directly in the generated query and removes restricted fields from the response.
+  - Builds the `SecurityContext` (authorization profile, roles, access matrices, lenses, row-level settings, user claims) and forwards it to Entities for Path A/B operations.
 - **Input Transformation**: Normalizes filters/where/sort, applies defaults, sanitizes HTML, injects timestamps, hashes password fields, normalizes empty strings, and enforces write-field permissions.
 - **Transactions + Latency Budgets**: Wraps mutations in transactions and applies query latency budget checks with accounting.
 - **Specialized Execution**: Uses raw SQL via `sea-query` for aggregates/recursive/upserts/reserve, presigns S3 uploads, and dispatches actions via the in-process `actions` library.
@@ -33,8 +34,8 @@ This is the most critical section for any Wasm component. Other engineers need t
 ## 4. Internal Data Flow
 1. **Receive WIT Call**: Accept a `GraphqlRequest` from Gateway and parse the operation type.
 2. **Verify & Guard**: Verify JWT, derive roles/auth profile, enforce no-roles profiles, and apply app policy checks (mutations enabled, private app redirect).
-3. **Resolve Context**: Resolve DB URL and role IDs; preflight access matrix for reads when configured.
-4. **Special Operations**: Handle file upload/convert, aggregates, recursive CTE, upsert/reserve, and other non-standard handlers directly (raw SQL via MySQL WIT).
+3. **Resolve Context**: Resolve DB URL and role IDs from the database; evaluate the access matrix to build the full authorization profile for the request; deny if the operation is not permitted.
+4. **Special Operations**: Handle file upload/convert, aggregates, recursive CTE, upsert/reserve, and other non-standard handlers directly (raw SQL via MySQL WIT), with authorization rules applied in the generated SQL.
 5. **Actions Dispatch**: If the top field maps to a resource action, call the in-process `actions` library (remote-resource or ActionsAPI path).
 6. **Standard Execution**: Normalize variables/query, build `SecurityContext`, enforce latency budget, wrap mutations in a transaction, and call Entities.
 7. **Post-Process**: Apply introspection filtering, strip restricted fields, wrap CRUD results, lift pagination, add suggested indexes, commit/rollback, and return `GraphqlResponse`.

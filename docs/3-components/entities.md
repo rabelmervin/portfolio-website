@@ -20,13 +20,13 @@ This is the most critical section for any Wasm component. Other engineers need t
 ## 3. Core Responsibilities
 - **Schema Generation**: Builds a full GraphQL schema from SeaORM models with extensive customizations to match BettyQL naming conventions (`where`, `sort`, `results`).
 - **WIT MySQL Proxy**: Implements `ProxyDatabaseTrait` to route SeaORM SQL queries through the WIT boundary to the host plugin.
-- **RBAC & Row-Level Security (Lifecycle Hooks)**: Uses Seaography hooks to enforce data-level security during SQL generation:
-  - **Entity Guard**: Blocks unauthorized nested relation access based on the access matrices.
-  - **Field Guard**: Hard-blocks read access to sensitive internal fields (like `password`, `cas_token`) at the SQL level.
-  - **Row-Level Security**: Dynamically injects `WHERE {column} = {user_id}` for configured entities.
-  - **Permission Filters**: Translates access matrix rules into dynamic `WHERE` conditions, replacing `$user_id` and `$user.<path>` with JWT claims.
-  - **Table Lenses**: Applies per-entity lens filters for read operations.
-  - **Non-native Filter Extension**: Merges `GraphilyFilterExt` (OR / non-native filters) into the SQL condition.
+- **RBAC & Row-Level Security (Lifecycle Hooks)**: Uses Seaography hooks to enforce data-level security during SQL generation. The authorization profile computed by Data-Engine is forwarded via `SecurityContext` and drives all hook decisions:
+  - **Entity Guard**: Validates access for every entity in the response — including nested relations — against the authorization profile. Unauthorized nested relations are soft-denied (`null` + GraphQL error).
+  - **Field Guard**: Blocks read access to sensitive fields (credentials, field-permission-restricted columns) before they are included in the query.
+  - **Row-Level Security**: Automatically scopes queries to the authenticated user's own records for entities configured for row-level filtering.
+  - **Permission Filters**: Applies access conditions from the authorization profile, with support for JWT claim value substitution in filter criteria.
+  - **Table Lenses**: Applies per-entity default display filters for read operations.
+  - **Non-native Filter Extension**: Merges `GraphilyFilterExt` (OR / non-native filters injected by Data-Engine) into the SQL condition.
 
 ## 4. Internal Data Flow
 1. **Receive Request**: Accept a `GqlRequest` (query, variables, operation-name, db-url, `SecurityContext`).

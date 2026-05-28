@@ -20,20 +20,23 @@ This is the most critical section for any Wasm component. Other engineers need t
 ## 3. Core Responsibilities
 - **JWT Management**: Generates and verifies access tokens (HS256/HS512/RS256), refresh tokens, and builder tokens.
 - **Multi-Tier Rate Limiting**: Maintains global state for IP-level, App-level (BQL, requests per minute/hour/day), Latency Budget, and Login abuse rate limits.
-- **RBAC Processing**: 
-  - **Field-Level RBAC**: Strips restricted fields from the final GraphQL JSON output before it is returned to the client, based on role configurations (`GRAPHILY_FIELD_PERMISSIONS`).
+- **RBAC Processing**:
+  - **Access Authorization**: Evaluates the access matrix for a given entity and action against the user's role IDs, returning a complete authorization decision — including row-level scope, permission-based filter rules, and blocked read/write fields.
+  - **Entity Access Check**: Performs a lightweight boolean access check for nested entity guard evaluation.
+  - **Field-Level Restrictions**: Strips restricted fields from GraphQL JSON responses based on role configurations (`GRAPHILY_FIELD_PERMISSIONS`).
 - **App Access Checks**: Evaluates `check-app-access` to enforce app state and visibility.
 - **Query Validation**: Validates query depth and complexity from the query string.
 - **Password Hashing**: Hashes and verifies `bcrypt` (modern) and legacy `SHA-512` passwords.
 - **OAuth + HMAC Helpers**: Generates/validates OAuth state and exposes HMAC signing.
 
 ## 4. Internal Data Flow
-1. **Receive Call**: Gateway/Data-Engine call a WIT function (JWT verify, rate limit, query validation, or RBAC strip).
+1. **Receive Call**: Gateway/Data-Engine call a WIT function (JWT verify, rate limit, query validation, RBAC authorization, or field restriction).
 2. **Execute Logic**:
-  - JWT: build secret list, verify signature/claims, return `AuthResult`.
+  - JWT: verify signature and claims, return the auth result.
   - Rate limits: update in-memory sliding-window buckets and return allow/deny.
-  - Query validation: compute depth/complexity from query text (introspection bypass).
-  - RBAC strip: remove disallowed fields from response JSON based on env rules.
+  - Query validation: compute depth and complexity from the query text.
+  - RBAC authorization: evaluate the access matrix for entity + action + roles, return the full authorization decision (permitted, row-level scope, permission filters, blocked fields).
+  - Field restriction: remove disallowed fields from response JSON based on env config.
 3. **Return Result**: Synchronous result or error back through the WIT boundary; no external I/O.
 
 ## 5. Libraries / Crates Used
